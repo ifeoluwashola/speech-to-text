@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verbatim Transcribe | Ephemeral Speech-to-Text</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse-slow {
+      animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            Verbatim Transcribe
+            <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-medium border border-indigo-500/30">Local & Private</span>
+          </h1>
+          <p class="text-xs text-slate-400">Word-for-word transcription for YouTube & Audio Tapes</p>
+        </div>
+      </div>
+
+      <!-- Ephemeral Badge -->
+      <div class="hidden sm:flex items-center space-x-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 px-3 py-1.5 rounded-lg">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <span>Zero Storage: Audio & links deleted instantly</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-8 space-y-6">
+
+    <!-- Input Card -->
+    <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl backdrop-blur">
+      
+      <!-- Tabs -->
+      <div class="flex border-b border-slate-700/80 mb-6 space-x-2">
+        <button id="tab-yt-btn" onclick="switchTab('youtube')" class="flex items-center gap-2 pb-3 px-4 text-sm font-semibold border-b-2 border-indigo-500 text-indigo-400 transition-all">
+          <svg class="w-5 h-5 text-red-400" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+          YouTube Link
+        </button>
+        <button id="tab-audio-btn" onclick="switchTab('audio')" class="flex items-center gap-2 pb-3 px-4 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+          </svg>
+          Audio Tape / File Upload
+        </button>
+      </div>
+
+      <!-- Tab Content: YouTube -->
+      <div id="tab-youtube" class="space-y-4">
+        <label class="block text-sm font-medium text-slate-300">
+          Paste YouTube Video URL
+        </label>
+        <div class="relative flex items-center">
+          <input 
+            type="url" 
+            id="yt-url" 
+            placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..." 
+            class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm pr-24"
+          />
+          <button 
+            type="button" 
+            onclick="pasteFromClipboard()" 
+            class="absolute right-2 px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-600 transition"
+          >
+            Paste
+          </button>
+        </div>
+        <p class="text-xs text-slate-400 flex items-center gap-1.5">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+          Instant fetch: If the video has English captions, it transcribes in 1–2 seconds without downloading video.
+        </p>
+
+        <!-- Time Range Selection (Optional) -->
+        <div class="bg-slate-900/60 border border-slate-700/60 rounded-xl p-3.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Time Window / Sermon Clip (Optional)
+            </span>
+            <span class="text-[11px] text-slate-500">Leave blank for entire video</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Start Time</label>
+              <input 
+                type="text" 
+                id="yt-start-time" 
+                placeholder="00:35:00 or 35:00" 
+                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none font-mono"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">End Time</label>
+              <input 
+                type="text" 
+                id="yt-end-time" 
+                placeholder="01:15:00" 
+                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none font-mono"
+              />
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500">
+            Format: <code>HH:MM:SS</code> or <code>MM:SS</code>. Captions are sliced instantly; audio downloads only extract this segment.
+          </p>
+        </div>
+      </div>
+
+      <!-- Tab Content: Audio Upload -->
+      <div id="tab-audio" class="hidden space-y-4">
+        <label class="block text-sm font-medium text-slate-300">
+          Upload Audio Recording (Digitized Tapes, MP3, WAV, M4A, etc.)
+        </label>
+        
+        <div 
+          id="dropzone" 
+          onclick="document.getElementById('audio-file').click()" 
+          class="border-2 border-dashed border-slate-600 hover:border-indigo-500 bg-slate-900/50 hover:bg-slate-900/80 rounded-2xl p-8 text-center cursor-pointer transition-all group"
+        >
+          <input type="file" id="audio-file" accept=".mp3,.wav,.m4a,.aac,.flac,.ogg,.webm,.wma,.mp4" class="hidden" onchange="handleFileSelected(event)" />
+          
+          <div class="flex flex-col items-center justify-center space-y-3">
+            <div class="w-12 h-12 rounded-full bg-indigo-500/10 group-hover:bg-indigo-500/20 text-indigo-400 flex items-center justify-center transition">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-slate-200">
+                <span class="text-indigo-400 underline">Click to upload</span> or drag and drop
+              </p>
+              <p class="text-xs text-slate-400 mt-1">
+                MP3, WAV, M4A, AAC, FLAC, OGG (Handles full 60–120 minute tapes)
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div id="selected-file-info" class="hidden flex items-center justify-between bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-sm">
+          <div class="flex items-center space-x-3 truncate">
+            <svg class="w-5 h-5 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            </svg>
+            <span id="file-name" class="text-slate-200 font-medium truncate">recording.mp3</span>
+            <span id="file-size" class="text-slate-500 text-xs shrink-0">45.2 MB</span>
+          </div>
+          <button type="button" onclick="clearSelectedFile()" class="text-slate-400 hover:text-rose-400 transition p-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Audio Tape Time Range Selection (Optional) -->
+        <div class="bg-slate-900/60 border border-slate-700/60 rounded-xl p-3.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Time Window / Tape Clip (Optional)
+            </span>
+            <span class="text-[11px] text-slate-500">Leave blank to transcribe entire tape</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Start Time</label>
+              <input 
+                type="text" 
+                id="audio-start-time" 
+                placeholder="00:15:00 or 15:00" 
+                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none font-mono"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">End Time</label>
+              <input 
+                type="text" 
+                id="audio-end-time" 
+                placeholder="00:55:00" 
+                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none font-mono"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings & Controls -->
+      <div class="mt-6 pt-5 border-t border-slate-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center space-x-2 text-xs text-slate-400 w-full sm:w-auto">
+          <label for="model-select" class="font-medium text-slate-300">Whisper Model:</label>
+          <select id="model-select" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+            <option value="small.en" selected>Small.en (Recommended - High Accuracy)</option>
+            <option value="base.en">Base.en (Fastest)</option>
+            <option value="medium.en">Medium.en (Highest Detail for Muffled Tapes)</option>
+          </select>
+        </div>
+
+        <button 
+          id="transcribe-btn" 
+          onclick="startTranscription()" 
+          class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
+        >
+          <span>Start Transcription</span>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Live Progress / Status Box -->
+    <div id="status-card" class="hidden bg-slate-800/90 border border-slate-700 rounded-2xl p-6 shadow-xl text-center space-y-4">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-500/10 text-indigo-400 animate-spin">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 id="status-title" class="text-base font-semibold text-slate-100">Transcribing Audio...</h3>
+        <p id="status-subtitle" class="text-xs text-slate-400 mt-1">This may take a moment for lengthy recordings. Please keep this tab open.</p>
+      </div>
+      <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden max-w-md mx-auto">
+        <div class="bg-indigo-500 h-1.5 rounded-full animate-pulse-slow w-full"></div>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div id="error-card" class="hidden bg-rose-950/40 border border-rose-800/80 rounded-2xl p-4 text-rose-300 text-sm flex items-start gap-3">
+      <svg class="w-5 h-5 text-rose-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <div class="flex-1">
+        <p class="font-medium">Transcription Error</p>
+        <p id="error-message" class="text-xs text-rose-400 mt-0.5">Something went wrong.</p>
+      </div>
+    </div>
+
+    <!-- Transcript Results -->
+    <div id="results-card" class="hidden bg-slate-800/90 border border-slate-700/80 rounded-2xl p-6 shadow-xl space-y-4">
+      
+      <!-- Result Header & Stats -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-700/80">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            Transcribed Text (Word-for-Word)
+          </h2>
+          <div class="flex items-center gap-3 text-xs text-slate-400 mt-1 flex-wrap">
+            <span id="stat-words" class="bg-slate-900 px-2.5 py-1 rounded-md border border-slate-700/60 font-mono">0 words</span>
+            <span id="stat-duration" class="bg-slate-900 px-2.5 py-1 rounded-md border border-slate-700/60 font-mono">Duration: 0m 0s</span>
+            <span id="stat-time" class="bg-slate-900 px-2.5 py-1 rounded-md border border-slate-700/60 font-mono">Time: 0s</span>
+            <span id="stat-source" class="bg-indigo-950/60 text-indigo-300 px-2.5 py-1 rounded-md border border-indigo-800/60 font-medium">Source</span>
+            <span id="stat-range" class="hidden bg-amber-950/60 text-amber-300 px-2.5 py-1 rounded-md border border-amber-800/60 font-medium">✂️ Clipped Section</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2 shrink-0">
+          <button 
+            id="copy-btn" 
+            onclick="copyTranscript()" 
+            class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <span id="copy-btn-text">Copy Text</span>
+          </button>
+
+          <button 
+            onclick="downloadTranscript()" 
+            class="px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-slate-600"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Download .TXT</span>
+          </button>
+
+          <button 
+            onclick="clearTranscript()" 
+            title="Clear and purge from screen" 
+            class="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-700/60 rounded-xl text-xs transition"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Continuous Paragraph Display -->
+      <div 
+        id="transcript-content" 
+        class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl p-5 text-slate-200 text-sm leading-relaxed whitespace-pre-wrap max-h-[500px] overflow-y-auto font-normal selection:bg-indigo-500 selection:text-white"
+      ></div>
+
+      <!-- Ephemeral Confirmation -->
+      <div class="text-right text-[11px] text-slate-500 italic">
+        ✓ Temporary audio files and links have been permanently removed from memory.
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+    Verbatim Transcribe &bull; 100% Private & Ephemeral &bull; Apple Silicon M2 Pro Accelerated
+  </footer>
+
+  <script>
+    let activeTab = 'youtube';
+    let selectedFile = null;
+    let currentTranscriptText = '';
+
+    function switchTab(tab) {
+      activeTab = tab;
+      const ytTab = document.getElementById('tab-youtube');
+      const audioTab = document.getElementById('tab-audio');
+      const ytBtn = document.getElementById('tab-yt-btn');
+      const audioBtn = document.getElementById('tab-audio-btn');
+
+      if (tab === 'youtube') {
+        ytTab.classList.remove('hidden');
+        audioTab.classList.add('hidden');
+        ytBtn.className = "flex items-center gap-2 pb-3 px-4 text-sm font-semibold border-b-2 border-indigo-500 text-indigo-400 transition-all";
+        audioBtn.className = "flex items-center gap-2 pb-3 px-4 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all";
+      } else {
+        ytTab.classList.add('hidden');
+        audioTab.classList.remove('hidden');
+        ytBtn.className = "flex items-center gap-2 pb-3 px-4 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all";
+        audioBtn.className = "flex items-center gap-2 pb-3 px-4 text-sm font-semibold border-b-2 border-indigo-500 text-indigo-400 transition-all";
+      }
+      hideError();
+    }
+
+    async function pasteFromClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          document.getElementById('yt-url').value = text.trim();
+        }
+      } catch (err) {
+        alert('Clipboard access denied or unavailable. Please paste manually.');
+      }
+    }
+
+    function handleFileSelected(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      selectedFile = file;
+
+      document.getElementById('file-name').textContent = file.name;
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      document.getElementById('file-size').textContent = `${sizeMB} MB`;
+      document.getElementById('selected-file-info').classList.remove('hidden');
+      document.getElementById('dropzone').classList.add('border-indigo-500');
+    }
+
+    function clearSelectedFile() {
+      selectedFile = null;
+      document.getElementById('audio-file').value = '';
+      document.getElementById('selected-file-info').classList.add('hidden');
+      document.getElementById('dropzone').classList.remove('border-indigo-500');
+    }
+
+    // Drag and Drop handlers
+    const dropzone = document.getElementById('dropzone');
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('border-indigo-500', 'bg-slate-900/80');
+    });
+    dropzone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('border-indigo-500', 'bg-slate-900/80');
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('border-indigo-500', 'bg-slate-900/80');
+      if (e.dataTransfer.files.length > 0) {
+        handleFileSelected({ target: { files: e.dataTransfer.files } });
+      }
+    });
+
+    function formatDuration(totalSeconds) {
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+      if (hours > 0) {
+        return `${hours}h ${minutes}m ${seconds}s`;
+      }
+      return `${minutes}m ${seconds}s`;
+    }
+
+    // Format elapsed processing time: if >= 60s, format as mm:ss or hh:mm:ss instead of raw seconds
+    function formatElapsedTime(sec) {
+      if (sec === undefined || sec === null || isNaN(sec)) return '0s';
+      if (sec < 60) {
+        return `${Number(sec).toFixed(1)}s`;
+      }
+      const totalSec = Math.round(sec);
+      const hours = Math.floor(totalSec / 3600);
+      const minutes = Math.floor((totalSec % 3600) / 60);
+      const seconds = totalSec % 60;
+      const pad = (n) => String(n).padStart(2, '0');
+      if (hours > 0) {
+        return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+      }
+      return `${pad(minutes)}:${pad(seconds)}`;
+    }
+
+    function showError(msg) {
+      const errorCard = document.getElementById('error-card');
+      document.getElementById('error-message').textContent = msg;
+      errorCard.classList.remove('hidden');
+    }
+
+    function hideError() {
+      document.getElementById('error-card').classList.add('hidden');
+    }
+
+    async function startTranscription() {
+      hideError();
+      const model = document.getElementById('model-select').value;
+      const transcribeBtn = document.getElementById('transcribe-btn');
+      const statusCard = document.getElementById('status-card');
+      const resultsCard = document.getElementById('results-card');
+
+      if (activeTab === 'youtube') {
+        const url = document.getElementById('yt-url').value.trim();
+        if (!url) {
+          showError('Please paste a valid YouTube video URL.');
+          return;
+        }
+
+        const startTime = document.getElementById('yt-start-time').value.trim();
+        const endTime = document.getElementById('yt-end-time').value.trim();
+
+        transcribeBtn.disabled = true;
+        transcribeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        statusCard.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        document.getElementById('status-title').textContent = 'Checking YouTube Video...';
+        document.getElementById('status-subtitle').textContent = (startTime || endTime)
+          ? `Retrieving specified section (${startTime || '00:00'} to ${endTime || 'end'})...`
+          : 'Retrieving captions or downloading audio stream for transcription...';
+
+        try {
+          const res = await fetch('/api/transcribe-youtube', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              url: url, 
+              model: model,
+              start_time: startTime || null,
+              end_time: endTime || null
+            })
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.detail || 'Failed to transcribe YouTube video');
+          }
+
+          displayResults(data);
+        } catch (err) {
+          showError(err.message);
+        } finally {
+          transcribeBtn.disabled = false;
+          transcribeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          statusCard.classList.add('hidden');
+        }
+
+      } else {
+        // Audio File Upload
+        if (!selectedFile) {
+          showError('Please select or drop an audio file first.');
+          return;
+        }
+
+        const startTime = document.getElementById('audio-start-time').value.trim();
+        const endTime = document.getElementById('audio-end-time').value.trim();
+
+        transcribeBtn.disabled = true;
+        transcribeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        statusCard.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        document.getElementById('status-title').textContent = 'Uploading & Transcribing Audio...';
+        document.getElementById('status-subtitle').textContent = (startTime || endTime)
+          ? `Transcribing selected range (${startTime || '00:00'} to ${endTime || 'end'})...`
+          : 'Processing with local Whisper. For 60-120 minute tapes, this takes a few minutes.';
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('model', model);
+        if (startTime) formData.append('start_time', startTime);
+        if (endTime) formData.append('end_time', endTime);
+
+        try {
+          const res = await fetch('/api/transcribe-audio', {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.detail || 'Failed to transcribe audio file');
+          }
+
+          displayResults(data);
+        } catch (err) {
+          showError(err.message);
+        } finally {
+          transcribeBtn.disabled = false;
+          transcribeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          statusCard.classList.add('hidden');
+        }
+      }
+    }
+
+    function displayResults(data) {
+      currentTranscriptText = data.text || '';
+      document.getElementById('transcript-content').textContent = currentTranscriptText;
+      document.getElementById('stat-words').textContent = `${data.word_count.toLocaleString()} words`;
+      document.getElementById('stat-duration').textContent = `Duration: ${formatDuration(data.duration_seconds)}`;
+      
+      // Formatted elapsed time (hh:mm:ss if >= 60s)
+      document.getElementById('stat-time').textContent = `Elapsed: ${formatElapsedTime(data.processing_time_seconds)}`;
+      
+      const sourceBadge = document.getElementById('stat-source');
+      if (data.is_instant) {
+        sourceBadge.textContent = '⚡ Instant Captions';
+        sourceBadge.className = 'bg-emerald-950/60 text-emerald-300 px-2.5 py-1 rounded-md border border-emerald-800/60 font-medium';
+      } else {
+        sourceBadge.textContent = `Whisper (${data.model_used || 'Local'})`;
+        sourceBadge.className = 'bg-indigo-950/60 text-indigo-300 px-2.5 py-1 rounded-md border border-indigo-800/60 font-medium';
+      }
+
+      const rangeBadge = document.getElementById('stat-range');
+      if (data.range_applied) {
+        rangeBadge.classList.remove('hidden');
+      } else {
+        rangeBadge.classList.add('hidden');
+      }
+
+      document.getElementById('results-card').classList.remove('hidden');
+      document.getElementById('results-card').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function copyTranscript() {
+      if (!currentTranscriptText) return;
+      try {
+        await navigator.clipboard.writeText(currentTranscriptText);
+        const btnText = document.getElementById('copy-btn-text');
+        btnText.textContent = 'Copied!';
+        setTimeout(() => {
+          btnText.textContent = 'Copy Text';
+        }, 2000);
+      } catch (err) {
+        alert('Could not copy to clipboard.');
+      }
+    }
+
+    function downloadTranscript() {
+      if (!currentTranscriptText) return;
+      const blob = new Blob([currentTranscriptText], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transcript_${new Date().toISOString().slice(0,10)}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function clearTranscript() {
+      currentTranscriptText = '';
+      document.getElementById('transcript-content').textContent = '';
+      document.getElementById('results-card').classList.add('hidden');
+      if (activeTab === 'youtube') {
+        document.getElementById('yt-url').value = '';
+      } else {
+        clearSelectedFile();
+      }
+      document.getElementById('yt-start-time').value = '';
+      document.getElementById('yt-end-time').value = '';
+      document.getElementById('audio-start-time').value = '';
+      document.getElementById('audio-end-time').value = '';
+      document.getElementById('stat-range').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
