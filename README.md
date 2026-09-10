@@ -22,27 +22,35 @@ A private, high-performance transcription system designed specifically for **You
 
 ## Quick Start
 
-### 1. Prerequisites
-- **Python 3.12**
-- **ffmpeg** (required for audio conversion):
-  ```bash
-  brew install ffmpeg
-  ```
+### Option 1: Running with Docker (Containerized)
 
-### 2. Launch
-Run the startup script:
+You can run the entire application inside a container with zero local dependency management:
+
 ```bash
-./run.sh
-```
-Or start manually:
-```bash
-source venv/bin/activate
-pip install -r requirements.txt
-python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+# Using Docker Compose
+docker compose up -d
+
+# Or using standard Docker CLI
+docker build -t verbatim-transcribe .
+docker run -d -p 8000:8000 --name verbatim-transcribe verbatim-transcribe
 ```
 
 Open your browser at:
 👉 **`http://localhost:8000`**
+
+### Option 2: Running Locally (Native Python)
+
+1. **Prerequisites**: Python 3.12 and ffmpeg (`brew install ffmpeg`).
+2. **Launch**:
+   ```bash
+   ./run.sh
+   ```
+   Or manually:
+   ```bash
+   source venv/bin/activate
+   pip install -r requirements.txt
+   python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+   ```
 
 ---
 

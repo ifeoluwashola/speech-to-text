@@ -1,0 +1,12 @@
+services:
+  speech-to-text:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: verbatim-transcribe:latest
+    container_name: verbatim-transcribe
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
