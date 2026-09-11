@@ -150,7 +150,7 @@ python -m pip install -r requirements.txt
 
 # Configurable host and port
 HOST="${HOST:-127.0.0.1}"
-PORT="${PORT:-8080}"
+PORT="${PORT:-8000}"
 
 echo "========================================================"
 echo " Starting Verbatim Transcribe Web Server..."
