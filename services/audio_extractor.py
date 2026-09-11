@@ -57,6 +57,27 @@ def parse_timestamp(val: Optional[str]) -> Optional[float]:
     raise ValueError(f"Invalid timestamp format '{val}'. Please use MM:SS or HH:MM:SS (e.g. 35:00 or 01:15:00).")
 
 
+def get_cookies_file_path() -> Optional[str]:
+    """
+    Look for a Netscape-formatted YouTube cookies.txt file.
+    Searches:
+    1. YOUTUBE_COOKIES_FILE env var
+    2. /app/cookies.txt (Docker container mount)
+    3. cookies.txt in workspace root
+    """
+    env_path = os.environ.get("YOUTUBE_COOKIES_FILE")
+    candidates = [
+        env_path,
+        "/app/cookies.txt",
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "cookies.txt"),
+        os.path.abspath("cookies.txt")
+    ]
+    for p in candidates:
+        if p and os.path.isfile(p) and os.path.getsize(p) > 0:
+            return os.path.abspath(p)
+    return None
+
+
 def format_transcript_snippets(snippets: list) -> str:
     """
     Format raw transcript snippets into natural, readable, continuous paragraphs.
@@ -105,7 +126,22 @@ def try_fetch_youtube_captions(
     Returns dict with text and duration if successful, else None.
     """
     try:
-        api = YouTubeTranscriptApi()
+        # Load cookies if available to prevent datacenter IP bot challenges
+        cookies_file = get_cookies_file_path()
+        session = None
+        if cookies_file:
+            try:
+                import http.cookiejar
+                import requests
+                jar = http.cookiejar.MozillaCookieJar(cookies_file)
+                jar.load(ignore_discard=True, ignore_expires=True)
+                session = requests.Session()
+                session.cookies = jar
+                logger.info(f"Loaded cookies into YouTubeTranscriptApi from {cookies_file}")
+            except Exception as ce:
+                logger.warning(f"Failed to load cookies for YouTubeTranscriptApi: {ce}")
+
+        api = YouTubeTranscriptApi(http_client=session) if session else YouTubeTranscriptApi()
         data = None
         try:
             data = api.fetch(video_id, languages=('en', 'en-US', 'en-GB'))
@@ -190,7 +226,24 @@ def download_youtube_audio(
         'quiet': True,
         'no_warnings': True,
         'noplaylist': True,
+        # Rotate through mobile/embedded clients to bypass cloud datacenter IP botguards
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'ios', 'mweb', 'web'],
+                'player_skip': ['webpage', 'configs'],
+            }
+        },
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+        }
     }
+
+    # Automatically attach cookies if available (from cookies.txt or YOUTUBE_COOKIES_FILE)
+    cookies_file = get_cookies_file_path()
+    if cookies_file:
+        logger.info(f"Using YouTube cookies file for yt-dlp: {cookies_file}")
+        ydl_opts['cookiefile'] = cookies_file
     
     # If time slicing is requested and ffmpeg is available, download sections
     if (start_seconds is not None or end_seconds is not None) and has_ffmpeg:
