@@ -59,6 +59,7 @@ jobs:
                     echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
                     
                     # Pull latest image
+                    docker rm -f verbatim-transcribe || true
                     docker pull ifeoluwashola/verbatim-transcribe:${{ needs.build.outputs.sha_tag }}
                     export IMAGE=ifeoluwashola/verbatim-transcribe:${{ needs.build.outputs.sha_tag }}
 
